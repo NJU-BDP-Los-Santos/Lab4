@@ -1,4 +1,4 @@
-package basic;
+package sample;
 
 
 
@@ -11,6 +11,7 @@ import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.Reducer;
+import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 import org.apache.hadoop.mapreduce.lib.partition.HashPartitioner;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.input.FileSplit;
@@ -46,9 +47,10 @@ public class Main // 主函数（类）
             job.setPartitionerClass(PidPartitioner.class);
             job.setNumReduceTasks(2);
             job.setGroupingComparatorClass(XGroup.class);
-            job.setOutputKeyClass(IntPair.class);
+            job.setOutputKeyClass(IntPairS.class);
             job.setOutputValueClass(NullWritable.class);
-            job.setInputFormatClass(TextInputFormat.class);
+            job.setInputFormatClass(PairInput.class);
+            job.setOutputFormatClass(TextOutputFormat.class);
             FileInputFormat.addInputPath(job, new Path(otherArgs[0]));
             FileOutputFormat.setOutputPath(job, new Path(otherArgs[1]));
             System.exit(job.waitForCompletion(true) ? 0 : 1);
@@ -59,33 +61,20 @@ public class Main // 主函数（类）
         }
     }
 
-    public static class ReaderMapper extends Mapper<LongWritable, Text, IntPair, NullWritable>
+    public static class ReaderMapper extends Mapper<IntPairS, NullWritable, IntPairS, NullWritable>
             // 用于读取文件中的信息，并且组织成为自定义的类型
     {
         @Override
-        protected void map(LongWritable key, Text value, Context context) throws IOException, InterruptedException
+        protected void map(IntPairS key, NullWritable value, Context context) throws IOException, InterruptedException
         {
-            StringTokenizer tokens = new StringTokenizer(value.toString());
-            int[] data = new int[2];
-
-            int i = 0;
-            while(tokens.hasMoreTokens())
-            {
-                data[i] = Integer.parseInt(tokens.nextToken());
-                ++i;
-            }
-
-            // 这里对i的情况进行分类讨论
-            IntPair pair = new IntPair(data[0], data[1]);
-
-            context.write(pair, NullWritable.get());
+            context.write(key, value);
         }
     }
 
-    public static class PidPartitioner extends HashPartitioner<IntPair, NullWritable>
+    public static class PidPartitioner extends HashPartitioner<IntPairS, NullWritable>
     {
         @Override
-        public int getPartition(IntPair key, NullWritable value,
+        public int getPartition(IntPairS key, NullWritable value,
                                 int numPartitions)
         {
             int len_of_part = 10 / numPartitions;
@@ -104,12 +93,12 @@ public class Main // 主函数（类）
     {
         public XGroup()
         {
-            super(IntPair.class, true);
+            super(IntPairS.class, true);
         }
         public int compare(WritableComparable left, WritableComparable right)
         {
-            IntPair l = (IntPair) left;
-            IntPair r = (IntPair) right;
+            IntPairS l = (IntPairS) left;
+            IntPairS r = (IntPairS) right;
             int l_x = l.getX();
             int r_x = r.getX();
             if (l_x == r_x)
@@ -121,10 +110,10 @@ public class Main // 主函数（类）
         }
     }
 
-    public static class JoinReducer extends Reducer<IntPair, NullWritable, Text, NullWritable>
+    public static class JoinReducer extends Reducer<IntPairS, NullWritable, Text, NullWritable>
     {
         @Override
-        protected void reduce(IntPair key, Iterable<NullWritable> values, Context context) throws IOException, InterruptedException
+        protected void reduce(IntPairS key, Iterable<NullWritable> values, Context context) throws IOException, InterruptedException
         {
             // 首先找到product对应的那个key
             for (NullWritable value: values)
