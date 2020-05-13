@@ -66,6 +66,12 @@ public class IntPairS implements WritableComparable<IntPairS>
         return new Text(Integer.toString(this.x) + "\t" + Integer.toString(this.y));
     }
 
+    @Override
+    public String toString()
+    {
+        return Integer.toString(this.x) + "\t" + Integer.toString(this.y);
+    }
+
     public int getX()
     {
         return this.x;
