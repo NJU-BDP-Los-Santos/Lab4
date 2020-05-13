@@ -32,4 +32,15 @@ Reference.md	# 用于记录参考
 
 ## 执行方式
 
+### Basic方法
+
+```bash
+hadoop jar /home/2020st27/Lab4/SecondSortBasic.jar /data/exercise_4 /user/2020st27/Lab4/Basic/output/
+```
+
+### Sample方法
+
+```bash
+hadoop jar /home/2020st27/Lab4/SecondSortSample.jar /data/exercise_4 /user/2020st27/Lab4/Sample/output/ /user/2020st27/Lab4/Sample/SampleFile/sample.txt
+```
 
